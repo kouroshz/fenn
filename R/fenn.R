@@ -1,17 +1,16 @@
-#' Scaled Linear Discriminant Analysis
+#' Free Energy Nearest Nighbour (FENN)
 #'
-#' @description Fits a Scaled Linear Discriminant model (SLDA) via a Von Neumann entropy penalized
-#'              distance metric learning formulation.
+#' @description Fits a Von Neumann entropy penalized distance metric learning model.
 #'
-#' @usage slda(x, \dots)
+#' @usage fenn(x, \dots)
 #' 
-#' \method{slda}{formula}(formula, data, \dots, subset, na.action)
+#' \method{fenn}{formula}(formula, data, \dots, subset, na.action)
 #'
-#' \method{slda}{default}(x, grouping, prior = proportions, tol = 1.0e-4, \dots)
+#' \method{fenn}{default}(x, grouping, prior = proportions, tol = 1.0e-4, \dots)
 #'                       
-#' \method{slda}{data.frame}(x, \dots)
+#' \method{fenn}{data.frame}(x, \dots)
 #'
-#' \method{slda}{matrix}(x, grouping, \dots, subset, na.action)
+#' \method{fenn}{matrix}(x, grouping, \dots, subset, na.action)
 #'
 #' @param formula A formula of the form \code{groups ~ x1 + x2 + \dots}  That is, the
 #'                response is the grouping factor and the right hand side specifies
@@ -31,7 +30,7 @@
 #'              probabilities should be specified in the order of the factor levels.
 #'
 #' @param tol A tolerance to decide if a matrix is singular; it will be used to modify
-#'            the scatter matrices by stabilizing eigne values less that \code{tol^2}.
+#'            the scatter matrices by stabilizing eignevalues less that \code{tol^2}.
 #'
 #' @param subset An index vector specifying the cases to be used in the training
 #'               sample.  (NOTE: If given, this argument must be named.)
@@ -43,7 +42,7 @@
 #'
 #' @param \dots arguments passed to or from other methods.
 #'
-#' @return An object of class \code{"slda"} containing the following components:
+#' @return An object of class \code{"fenn"} containing the following components:
 #' \item{prior}{The prior probabilities used.}
 #' \item{counts}{The group counts.}
 #' \item{means}{The group means.}
@@ -52,7 +51,7 @@
 #' \item{X.D}{The matrix of projections into dissimilarity directions. Same as \code{X.S + (n/n-1) * Cov(m)},
 #'            where \code{m} is the class means.}
 #' \item{X_D_neg_1_2}{The matrix \code{X.D} raised to the power -1/2. This is the scaling that is applied
-#'                    to data points before hand to generate the tilde transformed data points.}
+#'                    to data points prior to tilde transformation.}
 #' \item{S_1_2}{The learned optimal transformation that should be applied to tilde transformed data points.}
 #' \item{X_tilde_S}{The hamiltonian generated from data points.}
 #' \item{informative.dims}{The index of informative directions in the optimal space. Can be used for dimension reduction.}
@@ -60,22 +59,22 @@
 #' \item{best.mu}{The the optimal (temperature) parameter obtained by maximizing Fisher Information.}
 #' \item{E}{The average Energy for an automatically selected path of \code{mu} values \code{muVec}.}
 #' \item{dE}{The Fisher Information of \code{mu}.}
-#' \item{scaling}{The weights (eigen values) of maximum dissimilarity directions (eigenvectors of \code{S_1_2}).}
+#' \item{scaling}{The weights (eigenvalues) of maximum dissimilarity directions (eigenvectors of \code{S_1_2}).}
 #' \item{x.tilde}{The tilde transformed data.}
-#' \item{x.slda}{The \code{slda} transformed data.}
+#' \item{x.fenn}{The \code{fenn} transformed data.}
 #' \item{N}{The number of observations used.}
 #' \item{groupings}{The class variable of original data points.}
 #' \item{call}{The (matched) function call.}
 #' 
-#' @details The function fits an Von Neumann Entropy penalized distance metric learning problem
+#' @details The function fits a Von Neumann Entropy penalized distance metric learning problem
 #' to identify informative features and directions of maximam dissimilarity in the multi class case.
 #' The method automatically finds the optimal value of the entropy tuning parameter by maximizing the
 #' Fisher Information. The method can be used for sinlge class case to identify informative directions 
 #' as well as multi class case to identiy directions of maximum dissimilarity. In the multi class case,
 #' optimal solution is an optimally scaled lda for maximum  separability between classes that can results
-#' in more accurate classification.
+#' in more accurate classification. These direction are refered to as FENN directions.
 #' 
-#' Specifying the \code{prior} will affect the classification unless over-ridden in \code{predict.slda}.   
+#' Specifying the \code{prior} will affect the classification unless over-ridden in \code{predict.fenn}.   
 #' 
 #' @note This function may be called giving either a formula and optional data frame, or a matrix and
 #' grouping factor as the first two arguments.  All other arguments are optional, but \code{subset=} and
@@ -84,7 +83,7 @@
 #' If a formula is given as the principal argument the object may be modified using \code{update()} in 
 #' the usual way.
 #' 
-#' @seealso \code{\link{predict.slda}}
+#' @seealso \code{\link{predict.fenn}}
 #' 
 #' @examples
 #' Iris <- data.frame(rbind(iris3[,,1], iris3[,,2], iris3[,,3]),
@@ -94,7 +93,7 @@
 #' ## your answer may differ
 #' ##  c  s  v
 #' ## 22 23 30
-#' z <- slda(Sp ~ ., Iris, prior = c(1,1,1)/3, subset = train)
+#' z <- fenn(Sp ~ ., Iris, prior = c(1,1,1)/3, subset = train)
 #' predict(z, Iris[-train, ])$class
 #' ##  [1] s s s s s s s s s s s s s s s s s s s s s s s s s s s c c c
 #' ## [31] c c c c c c c v c c c c v c c c c c c c c c c c c v v v v v
@@ -104,11 +103,11 @@
 #' @export
 #' 
 
-slda <- function(x, ...) UseMethod("slda")
+fenn <- function(x, ...) UseMethod("fenn")
 
 #' @export
 #'
-slda.formula <- function(formula, data, ..., subset, na.action)
+fenn.formula <- function(formula, data, ..., subset, na.action)
 {
   m <- match.call(expand.dots = FALSE)
   m$... <- NULL
@@ -119,11 +118,11 @@ slda.formula <- function(formula, data, ..., subset, na.action)
   x <- model.matrix(Terms, m)
   xint <- match("(Intercept)", colnames(x), nomatch = 0L)
   if(xint > 0L) x <- x[, -xint, drop = FALSE]
-  res <- slda.default(x, grouping, ...)
+  res <- fenn.default(x, grouping, ...)
   res$terms <- Terms
   ## fix up call to refer to the generic, but leave arg name as `formula'
   cl <- match.call()
-  cl[[1L]] <- as.name("slda")
+  cl[[1L]] <- as.name("fenn")
   res$call <- cl
   res$contrasts <- attr(x, "contrasts")
   res$xlevels <- .getXlevels(Terms, m)
@@ -133,18 +132,18 @@ slda.formula <- function(formula, data, ..., subset, na.action)
 
 #' @export
 #'
-slda.data.frame <- function(x, ...)
+fenn.data.frame <- function(x, ...)
 {
-  res <- slda(structure(data.matrix(x), class = "matrix"), ...)
+  res <- fenn(structure(data.matrix(x), class = "matrix"), ...)
   cl <- match.call()
-  cl[[1L]] <- as.name("slda")
+  cl[[1L]] <- as.name("fenn")
   res$call <- cl
   res
 }
 
 #' @export
 #'
-slda.matrix <- function(x, grouping, ..., subset, na.action)
+fenn.matrix <- function(x, grouping, ..., subset, na.action)
 {
   if(!missing(subset)) {
     x <- x[subset, , drop = FALSE]
@@ -156,17 +155,17 @@ slda.matrix <- function(x, grouping, ..., subset, na.action)
     grouping <- dfr$g
     x <- dfr$x
   }
-  #    res <- NextMethod("slda")
-  res <- slda.default(x, grouping, ...)
+  #    res <- NextMethod("fenn")
+  res <- fenn.default(x, grouping, ...)
   cl <- match.call()
-  cl[[1L]] <- as.name("slda")
+  cl[[1L]] <- as.name("fenn")
   res$call <- cl
   res
 }
 
 #' @export
 #'
-model.frame.slda <- function(formula, ...)
+model.frame.fenn <- function(formula, ...)
 {
   oc <- formula$call
   oc$prior <- oc$tol <- oc$method <- oc$CV <- oc$nu <- NULL
@@ -179,21 +178,21 @@ model.frame.slda <- function(formula, ...)
   eval(oc, env)
 }
 
-#' This is the main function for fitting \code{slda}.
+#' This is the main function for fitting \code{fenn}.
 #'
-#' @usage slda.default(x, ...)
+#' @usage fenn.default(x, ...)
 #'                  
-#' @param x An object of class \code{"slda"}.
+#' @param x An object of class \code{"fenn"}.
 #' 
 #' @details This function is a method for the generic function
-#' \code{print()} for class \code{"slda"}.
+#' \code{print()} for class \code{"fenn"}.
 #' It can be invoked by calling \code{print(x)} for an
 #' object \code{x} of the appropriate class, or directly by
-#' calling \code{print.slda(x)} regardless of the
+#' calling \code{print.fenn(x)} regardless of the
 #' class of the object.
 #' @export
 #'
-slda.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
+fenn.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
   if(is.null(dim(x))) stop("'x' is not a matrix")
   x <- as.matrix(x)
   if(any(!is.finite(x)))
@@ -361,8 +360,8 @@ slda.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
   ## transform the data
  
   x.tilde <- t(apply(x, 1, function(xx) matrix(X_D_neg_1_2 %*% matrix(xx, nco = 1), nrow = 1))) 
-  x.slda <- x.tilde %*% t(S1_2)
-  x.slda <- t(t(scalings$vectors) %*% t(x.slda))
+  x.fenn <- x.tilde %*% t(S1_2)
+  x.fenn <- t(t(scalings$vectors) %*% t(x.fenn))
   
   
   if(!is.null(dimnames(x))){
@@ -372,31 +371,31 @@ slda.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
   
   
   cl <- match.call()
-  cl[[1L]] <- as.name("slda")
+  cl[[1L]] <- as.name("fenn")
   s <- structure(list(prior = prior, counts = counts, means = group.means,
                       X.S = X.S, X.D = X.D, S1_2 = S1_2, X_D_neg_1_2 = X_D_neg_1_2, informative.dims = informative.dims, 
                       muVec = muVec, best.mu = best.mu, lambdas = W$w, E = E, dE = dE, X_tilde_S = X_tilde_S,
-                      x.tilde = x.tilde, x.slda = x.slda, grouping = grouping, scalings = scalings, lev = lev,
+                      x.tilde = x.tilde, x.fenn = x.fenn, grouping = grouping, scalings = scalings, lev = lev,
                       N = n, call = cl),
-                 class = "slda")
+                 class = "fenn")
   return(s)
 }
 
 
-#' Classify Multivariate Observations by Scaled Linear Discrimination
+#' Classify Multivariate Observations 
 #'
-#' @description Classify multivariate observations in conjunction with \code{slda}, and also
+#' @description Classify multivariate observations in conjunction with \code{fenn}, and also
 #' project data onto the scaled linear discriminants.
 #'
-#' @usage predict.slda(object, newdata, prior = object$prior, dimen,
+#' @usage predict.fenn(object, newdata, prior = object$prior, dimen,
 #'                               method = c("knn", "lda"), \dots)
 #' 
-#' @param object Object  of class \code{"slda"}.
+#' @param object Object  of class \code{"fenn"}.
 #' @param newdata Data frame of cases to be classified or, if \code{object}
 #'                has a formula, a data frame with columns of the same names as the
 #'                variables used.  A vector will be interpreted
 #'                as a row vector.  If newdata is missing, an attempt will be
-#'                made to retrieve the data used to fit the \code{slda} object.
+#'                made to retrieve the data used to fit the \code{fenn} object.
 #' @param reduce.dm The dimension of the data will be reduced before performing knn.
 #'
 #' @param method This determines how the parameter estimation is handled. With \code{"plug-in"}
@@ -413,9 +412,9 @@ slda.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
 #'                  classes in the tilde transformed space will be returned.}
 #' 
 #' @details This function is a method for the generic function \code{predict()} for
-#' class \code{"slda"}.  It can be invoked by calling \code{predict(x)} for
+#' class \code{"fenn"}.  It can be invoked by calling \code{predict(x)} for
 #' an object \code{x} of the appropriate class, or directly by calling
-#' \code{predict.slda(x)} regardless of the class of the object.
+#' \code{predict.fenn(x)} regardless of the class of the object.
 #'
 #' Missing values in \code{newdata} are handled by returning \code{NA} if the
 #' scaled linear discriminants cannot be evaluated. If \code{newdata} is omitted and
@@ -430,12 +429,12 @@ slda.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
 #' train <- rbind(iris3[tr,,1], iris3[tr,,2], iris3[tr,,3])
 #' test <- rbind(iris3[-tr,,1], iris3[-tr,,2], iris3[-tr,,3])
 #' cl <- factor(c(rep("s",25), rep("c",25), rep("v",25)))
-#' z <- slda(train, cl)
+#' z <- fenn(train, cl)
 #' predict(z, test)$class
 #' 
 #' @export
-predict.slda <- function(object, newdata, method = c('knn', 'lda'), reduce.dim = F, prior = object$prior, ...){
-  if(!inherits(object, "slda")) stop("object not of class \"slda\"")
+predict.fenn <- function(object, newdata, method = c('knn', 'lda'), reduce.dim = F, prior = object$prior, ...){
+  if(!inherits(object, "fenn")) stop("object not of class \"fenn\"")
   method <- match.arg(method)
   if(!is.null(Terms <- object$terms)) { # formula fit
     Terms <- delete.response(Terms)
@@ -484,16 +483,16 @@ predict.slda <- function(object, newdata, method = c('knn', 'lda'), reduce.dim =
   scalings <- object$scalings
   
   x.tilde <- t(apply(x, 1, function(xx) matrix(X_D_neg_1_2 %*% matrix(xx, nco = 1), nrow = 1))) 
-  x.slda <- x.tilde %*% t(S1_2)
-  x.slda <- t(t(scalings$vectors) %*% t(x.slda))
+  x.fenn <- x.tilde %*% t(S1_2)
+  x.fenn <- t(t(scalings$vectors) %*% t(x.fenn))
   
   
   if(method == "knn"){
     if(reduce.dim){
-      knn.pred <- knn(object$x.slda[,object$informative.dims], x.slda[,object$informative.dims], 
+      knn.pred <- knn(object$x.fenn[,object$informative.dims], x.fenn[,object$informative.dims], 
                       factor(object$grouping), k = 3, prob=F)
     }else{
-      knn.pred <- knn(object$x.slda, x.slda, factor(object$grouping), k = 3, prob=F)
+      knn.pred <- knn(object$x.fenn, x.fenn, factor(object$grouping), k = 3, prob=F)
     }
     class.label <- knn.pred
     posterior <- NULL
@@ -507,26 +506,26 @@ predict.slda <- function(object, newdata, method = c('knn', 'lda'), reduce.dim =
   }
   #dimnames(posterior) <- rownames(x)
   
-  list(class = class.label, posterior = posterior, x.slda = x.slda)
+  list(class = class.label, posterior = posterior, x.fenn = x.fenn)
 }
 
-#' Print Method for Class \code{slda}.
+#' Print Method for Class \code{fenn}.
 #' 
-#' Prints summary table of slda fitted object.
+#' Prints summary table of fenn fitted object.
 #'
-#' @usage print.slda(x, ...)
+#' @usage print.fenn(x, ...)
 #'                  
-#' @param x An object of class \code{"slda"}.
+#' @param x An object of class \code{"fenn"}.
 #' 
 #' @details This function is a method for the generic function
-#' \code{print()} for class \code{"slda"}.
+#' \code{print()} for class \code{"fenn"}.
 #' It can be invoked by calling \code{print(x)} for an
 #' object \code{x} of the appropriate class, or directly by
-#' calling \code{print.slda(x)} regardless of the
+#' calling \code{print.fenn(x)} regardless of the
 #' class of the object.
 #' @export
 #'
-print.slda <- function(x, ...)
+print.fenn <- function(x, ...)
 {
   if(!is.null(cl <- x$call)) {
     names(cl)[2L] <- ""
@@ -545,14 +544,14 @@ print.slda <- function(x, ...)
 }
 
 
-#' Plot Method for Class \code{slda}.
+#' Plot Method for Class \code{fenn}.
 #' 
 #' Plots a set of data on one, two or more scaled linear discriminants.
 #'
-#' @usage plot.slda(x, panel = panel.slda, \dots, cex = 0.7, dimen,
-#'                  abbrev = FALSE, xlab = "SLD1", ylab = "SLD2")
+#' @usage plot.fenn(x, panel = panel.fenn, \dots, cex = 0.7, dimen,
+#'                  abbrev = FALSE, xlab = "FENN1", ylab = "FENN2")
 #'                  
-#' @param x An object of class \code{"slda"}.
+#' @param x An object of class \code{"fenn"}.
 #' 
 #' @param panel The panel function used to plot the data.
 #'
@@ -568,10 +567,10 @@ print.slda <- function(x, ...)
 #' @param ylab Label for the \code{y} axis.
 #' 
 #' @details This function is a method for the generic function
-#' \code{plot()} for class \code{"slda"}.
+#' \code{plot()} for class \code{"fenn"}.
 #' It can be invoked by calling \code{plot(x)} for an
 #' object \code{x} of the appropriate class, or directly by
-#' calling \code{plot.slda(x)} regardless of the
+#' calling \code{plot.fenn(x)} regardless of the
 #' class of the object.
 #'
 #' The behaviour is determined by the value of \code{dimen}. For
@@ -582,11 +581,11 @@ print.slda <- function(x, ...)
 #'
 #' @export
 #'
-plot.slda <- function(x, panel = panel.slda, ..., cex = 0.7,
+plot.fenn <- function(x, panel = panel.fenn, ..., cex = 0.7,
                       dimen, abbrev = FALSE,
-                      xlab = "SLD1", ylab = "SLD2", reduce.dm = T)
+                      xlab = "FENN1", ylab = "FENN2", reduce.dm = T)
 {
-  panel.slda <- function(x, y, ...) text(x, y, as.character(g), cex = cex, ...)
+  panel.fenn <- function(x, y, ...) text(x, y, as.character(g), cex = cex, ...)
   if(!is.null(Terms <- x$terms)) { # formula fit
     data <- model.frame(x)
     g <- model.response(data)
@@ -602,8 +601,8 @@ plot.slda <- function(x, panel = panel.slda, ..., cex = 0.7,
   }
   if(abbrev) levels(g) <- abbreviate(levels(g), abbrev)
   means <- colMeans(x$means)
-  X <- x$x.slda
-  colnames(X) <- paste('SLDA', 1:ncol(X), sep = '')
+  X <- x$x.fenn
+  colnames(X) <- paste('FENN', 1:ncol(X), sep = '')
   if(reduce.dm){
     X <- X[,x$informative.dims, drop = F]
   }
