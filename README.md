@@ -1,13 +1,8 @@
 ---
 title: "Free Energy Nearest Neighbour (FENN)"
-output:
-  bookdown::html_document2: default
+output: html_document
 bibliography: references.bib
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 
 # Description
@@ -25,3 +20,5 @@ install_github("kouroshz/fenn", local = FALSE)
 fit <- fenn(y~., data)
 p <- predict(fit, newdata)
 ```
+
+# Citation
