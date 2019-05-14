@@ -1,6 +1,6 @@
 Package: fenn
 Type: Package
-Title: Free Energy Nearest Neighbour (FENN)
+Title: Free Energy Nearest Neighbor (FENN)
 Version: 0.1.0
 Date: 2018-08-18
 Author: Kourosh Zarringhalam [aut,cre], Carl Fakhry [aut,cre], Sho Inaba [aut,cre]

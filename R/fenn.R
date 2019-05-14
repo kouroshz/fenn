@@ -1,4 +1,4 @@
-#' Free Energy Nearest Nighbour (FENN)
+#' Free Energy Nearest Neighbor (FENN)
 #'
 #' @description Fits a Von Neumann entropy penalized distance metric learning model.
 #'
@@ -30,7 +30,7 @@
 #'              probabilities should be specified in the order of the factor levels.
 #'
 #' @param tol A tolerance to decide if a matrix is singular; it will be used to modify
-#'            the scatter matrices by stabilizing eignevalues less that \code{tol^2}.
+#'            the scatter matrices by stabilizing eigenvalues less that \code{tol^2}.
 #'
 #' @param subset An index vector specifying the cases to be used in the training
 #'               sample.  (NOTE: If given, this argument must be named.)
@@ -67,12 +67,12 @@
 #' \item{call}{The (matched) function call.}
 #' 
 #' @details The function fits a Von Neumann Entropy penalized distance metric learning problem
-#' to identify informative features and directions of maximam dissimilarity in the multi class case.
+#' to identify informative features and directions of maximum dissimilarity in the multi class case.
 #' The method automatically finds the optimal value of the entropy tuning parameter by maximizing the
-#' Fisher Information. The method can be used for sinlge class case to identify informative directions 
-#' as well as multi class case to identiy directions of maximum dissimilarity. In the multi class case,
+#' Fisher Information. The method can be used for single class case to identify informative directions 
+#' as well as multi class case to identify directions of maximum dissimilarity. In the multi class case,
 #' optimal solution is an optimally scaled lda for maximum  separability between classes that can results
-#' in more accurate classification. These direction are refered to as FENN directions.
+#' in more accurate classification. These direction are referred to as FENN directions.
 #' 
 #' Specifying the \code{prior} will affect the classification unless over-ridden in \code{predict.fenn}.   
 #' 
@@ -358,7 +358,7 @@ fenn.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
   
   
   ## transform the data
- 
+  
   x.tilde <- t(apply(x, 1, function(xx) matrix(X_D_neg_1_2 %*% matrix(xx, nco = 1), nrow = 1))) 
   x.fenn <- x.tilde %*% t(S1_2)
   x.fenn <- t(t(scalings$vectors) %*% t(x.fenn))
@@ -421,7 +421,7 @@ fenn.default <- function(x, grouping, prior, tol = 1.0e-4, ...){
 #' the \code{na.action} of the fit omitted cases, these will be omitted on the
 #' prediction.
 #'
-#' This version centres the scaled linear discriminants so that the
+#' This version centers the scaled linear discriminants so that the
 #' weighted mean (weighted by \code{prior}) of the group centroids is at
 #' the origin. 
 #' 

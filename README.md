@@ -1,8 +1,4 @@
----
-bibliography: references.bib
----
-
-# Free Energy Nearest Neighbour (FENN)
+# Free Energy Nearest Neighbor (FENN)
 FENN is an R package implementing a Von Neumann Entropy based distance metric learning model. The method identifies informative and non-informative features in the data. It scales and projects the data onto a subspace of maximal separation between classes. The corresponding optimal weights on each dimension are identified by optimizing the Von Neumann entropy. The model can be applied to single class (unsupervised) or multi class data, bridging the gap between PCA, LDA and distance metric learning. 
 
 
@@ -30,22 +26,4 @@ print(z)
 plot(z)
 ```
 # Citation
----
-references:
-- id: fenner2012a
-  title: One-click science marketing
-  author:
-  - family: Fenner
-    given: Martin
-  container-title: Nature Materials
-  volume: 11
-  URL: 'http://dx.doi.org/10.1038/nmat3283'
-  DOI: 10.1038/nmat3283
-  issue: 4
-  publisher: Nature Publishing Group
-  page: 261-263
-  type: article-journal
-  issued:
-    year: 2012
-    month: 3
----
+**A Free Energy Based Approach For Distance Metric Learning**, Sho Inaba, Carl T. Fakhry, Rahul V. Kulkarni, Kourosh Zarringhalam. *The 25th ACM SIGKDD Conference on Knowledge Discovery and Data Mining ACM*, August 4-8, 2019, Anchorage, AK, USA.
