@@ -2,7 +2,7 @@
 title: "Free Energy Nearest Neighbour (FENN)"
 output:
   bookdown::html_document2: default
-bibliography: your-bib-file.bib
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
