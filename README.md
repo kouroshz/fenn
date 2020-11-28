@@ -3,11 +3,19 @@ FENN is an R package implementing a Von Neumann Entropy based distance metric le
 
 
 ## Installation
-To install the package directly from GitHub, you need the devtools library.
+To install the package directly from GitHub, you need the devtools library. 
+
 ```{R}
 library(devtools)
 install_github("kouroshz/fenn", local = FALSE)
 ```
+
+**Note:** If you run into an issue regarding Errors (converted from warning) you may need to set the environment variable as:
+
+```{R}
+Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
+```
+
 ## Usage
 ```
 fit <- fenn(y~., data)
